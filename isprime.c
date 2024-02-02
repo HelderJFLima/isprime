@@ -43,9 +43,8 @@ int main(int argc, char *argv[])
 
 		if(!testNum)									/* Error */
 		{
-			printf("\nThe number must be an integer ");
-
-			printf("from %lu to %lu\n\n", MINVALUE, ULONG_MAX - 1);
+			printf("\nThe number must be an integer "
+								"from %lu to %lu\n\n", MINVALUE, ULONG_MAX - 1);
 
 			return 1;
 		}
@@ -57,9 +56,8 @@ int main(int argc, char *argv[])
 
 		if(!testNum)
 		{
-			printf("\nThe number must be an integer ");
-
-			printf("from %lu to %lu\n\n", MINVALUE, ULONG_MAX - 1);
+			printf("\nThe number must be an integer "
+								"from %lu to %lu\n\n", MINVALUE, ULONG_MAX - 1);
 
 			return 2;
 		}
@@ -82,7 +80,8 @@ int main(int argc, char *argv[])
 														
 	if( !getparameters(file, &quantity, &last) )		/* Read the first line */
 	{													/* of the file         */
-		printf("\nError reading file\n\n");
+		
+		printf("\nmain->getparameters: error reading file\n\n");
 
 		fclose(file);
 
@@ -98,7 +97,7 @@ int main(int argc, char *argv[])
 
 		if(listp == NULL)
 		{
-			printf("\nError loading list of prime numbers\n\n");
+			printf("\nmain->loadlist: error loading list of prime numbers\n\n");
 
 			fclose(file);
 
@@ -114,15 +113,11 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		printf("\nThe available file may not have enough ");
-
-		printf("prime numbers to determine the result.\n");
-
-		printf("\nDo you want this program to calculate the missing ");
-
-		printf("prime numbers to reach the conclusion if necessary?\n");
-
-		printf("\nMay need to evaluate %lu numbers.\n", limit - last);
+		printf("\nThe available file may not have enough "
+			     "prime numbers to determine the result.\n"
+			   "\nDo you want this program to calculate the missing "
+			     "prime numbers to reach the conclusion if necessary?\n"
+			   "\nMay need to evaluate %lu numbers.\n", limit - last);
 
 		do
 		{
@@ -139,7 +134,8 @@ int main(int argc, char *argv[])
 
 			if(listp == NULL)
 			{
-				printf("\nError loading list of prime numbers\n\n");
+				printf("\nmain->loadlist: error loading list "
+										 "of prime numbers\n\n");
 
 				return 7;
 			}
@@ -158,7 +154,8 @@ int main(int argc, char *argv[])
 														/* extra primes      */
 				if(listad == NULL)
 				{
-					printf("\nError loading extra list of prime numbers\n\n");
+					printf("\nmain->adlalloc: error loading extra "
+											 "list of prime numbers\n\n");
 
 					free(listp);
 
@@ -174,7 +171,7 @@ int main(int argc, char *argv[])
 															/* Overwrite file */
 				if( !overwritefile(FILENAME, quantity, last, listp, listad) )
 				{
-					printf("\nError overwriting file\n\n");
+					printf("\nmain->overwritefile: error overwriting file\n\n");
 
 					free(listp);
 

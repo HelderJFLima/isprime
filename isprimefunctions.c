@@ -47,14 +47,14 @@ unsigned long getfromarg(char *argument)
 
 		if(number == ULONG_MAX)						/* Upper limit violation */
 		{
-			printf("\nThe number is too large\n");
+			printf("\ngetfromarg->strtoul: the number is too large\n");
 
 			return 0;
 		}
 	}
 	else
 	{
-		printf("\nFormat error\n");
+		printf("\ngetfromarg->argv: format error\n");
 
 		return 0;
 	}
@@ -105,14 +105,14 @@ unsigned long getfromstdin(void)
 
 		if(number == ULONG_MAX)						/* Upper limit violation */
 		{
-			printf("\nThe number is too large\n");
+			printf("\ngetfromstdin->strtoul: the number is too large\n");
 
 			return 0;
 		}
 	}
 	else
 	{
-		printf("\nFormat error\n");
+		printf("\ngetfromstdin->fgets: format error\n");
 
 		free(string);
 
@@ -154,7 +154,8 @@ int getparameters(FILE *file, unsigned long *quantity, unsigned long *last)
 
 	if(lptr1 == NULL || lptr1 != line)				/* Substring missing or in */
 	{												/* wrong position          */
-		printf("\nFile format error\n");
+		
+		printf("\ngetparameters->strstr: file format error\n");
 
 		free(line);
 
@@ -165,7 +166,8 @@ int getparameters(FILE *file, unsigned long *quantity, unsigned long *last)
 
 	if(lptr2 == NULL)								/* Substring missing */
 	{
-		printf("\nFile format error\n");
+		
+		printf("\ngetparameters->strstr: file format error\n");
 
 		free(line);
 
@@ -177,7 +179,8 @@ int getparameters(FILE *file, unsigned long *quantity, unsigned long *last)
 
 	if( !isdigit(*lptr1) )							/* Test if there is a */
 	{												/* number             */
-		printf("\nFormat error\n");
+		
+		printf("\ngetparameters->strstr: format error\n");
 
 		free(line);
 
@@ -188,7 +191,7 @@ int getparameters(FILE *file, unsigned long *quantity, unsigned long *last)
 
 	if(*quantity == 0 || *quantity == ULONG_MAX)	/* Illegal quantities */
 	{
-		printf("\nNumber format error\n");
+		printf("\ngetparameters->strtoul: number format error\n");
 
 		free(line);
 
@@ -200,7 +203,7 @@ int getparameters(FILE *file, unsigned long *quantity, unsigned long *last)
 
 	if( !isdigit(*lptr2) )							/* Test 2nd number */
 	{
-		printf("\nFormat error\n");
+		printf("\ngetparameters->strstr: format error\n");
 
 		free(line);
 
@@ -211,7 +214,7 @@ int getparameters(FILE *file, unsigned long *quantity, unsigned long *last)
 
 	if(*last < MINVALUE || *last == ULONG_MAX)		/* Illegal values */
 	{
-		printf("\nNumber format error\n");
+		printf("\ngetparameters->strtoul: number format error\n");
 
 		free(line);
 
@@ -300,7 +303,7 @@ unsigned long* loadlist(FILE *file, unsigned long quantity)
 		{
 			if( !isdigit(*entry) )					/* If it is not a number */
 			{
-				printf("\nEntry format error\n");
+				printf("\nloadlist->fgets: entry format error\n");
 
 				free(list);
 
@@ -324,7 +327,7 @@ unsigned long* loadlist(FILE *file, unsigned long quantity)
 	if(quantity > 0)						/* Declared quantity and number of */
 	{										/* lines read do not match         */
 
-		printf("\nFile format error: missing entries\n");
+		printf("\nloadlist->file format error: missing entries\n");
 
 		free(list);
 
@@ -360,7 +363,7 @@ int overwritefile(char *filename, unsigned long quantity, unsigned long last,
 
 	if( ferror(file) )							/* If an error occurred in */
 	{											/* the process             */
-		perror("\noverwritefile");
+		perror("\noverwritefile->fprintf");
 
 		fclose(file);
 
