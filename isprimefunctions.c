@@ -14,8 +14,10 @@
 
 #define BASE	  10			/* Base used in strtoul function (stdlib.h) */
 #define ENTRYSIZE 20			/* Maximum size to copy a file number */
+#define EXTENSION ".txt"		/* Extension of the file of factors */
+#define FILENAME  "factorization_of_"	/* For the file of factors */
 #define MINVALUE  7				/* Minimum value acceptable for testing */
-#define STRING1   "quantity="	/* String used in the file */
+#define STRING1   "quantity="	/* String used in the file of primes */
 #define STRING2   ",last="		/* Ditto */
 
 
@@ -34,6 +36,54 @@ unsigned long* adlalloc(unsigned long minimum, unsigned long maximum)
 		perror("\nadlalloc->calloc");
 
 	return list;
+}
+
+
+char* getfilename(char *firstpart, unsigned long number, char *extension)
+{
+	int size;			/* Size of an array */
+	char *filename;		/* String for the file name */
+	char *nstring;		/* String for number */
+
+	size = (int)ceil( log10(number) ) + 2;	/* +2 for the terminating null     */
+											/* character and to avoid overflow */
+
+	nstring = (char*)calloc( size, sizeof(char) );
+
+	if(nstring == NULL)
+	{
+		perror("\ngetfilename->calloc");
+
+		return NULL;
+	}
+
+	if( ( sprintf(nstring, "%lu", number) ) < 0 )	/* Write the number in    */
+	{												/* the string and test if */
+		perror("\ngetfilename->sprintf");			/* it worked              */
+
+		free(nstring);
+
+		return NULL;
+	}
+
+	size += ( strlen(firstpart) + strlen(extension) );
+
+	filename = (char*)calloc( size, sizeof(char) );
+
+	if(filename != NULL)
+	{
+		strcpy(filename, firstpart);
+
+		strcat(filename, nstring);					/* Concatenate the strings */
+
+		strcat(filename, extension);
+	}
+	else
+		perror("\ngetfilename->calloc");
+
+	free(nstring);
+
+	return filename;
 }
 
 
@@ -339,8 +389,116 @@ unsigned long* loadlist(FILE *file, unsigned long quantity)
 }
 
 
+int numfactors(unsigned long number, unsigned long maxprime,
+			   unsigned long *primes1, unsigned long *primes2,
+			   unsigned long **factors, unsigned long **powers)
+{
+	unsigned long checknum;		/* To check if a factor is prime */
+	unsigned long *facp;		/* Auxiliar pointers */
+	unsigned long *powp;
+	int size;					/* Size of arrays */
+
+	size = 2 * (int)ceil( log10(ULONG_MAX) );			/* Always enough */
+
+														/* Array for factors */
+	*factors = (unsigned long*)calloc( size, sizeof(unsigned long) );
+
+	if(*factors == NULL)
+	{
+		perror("\nnumfactors->calloc");
+
+		return 0;
+	}
+														/* Array for powers */
+	*powers = (unsigned long*)calloc( size, sizeof(unsigned long) );
+
+	if(*powers == NULL)
+	{
+		perror("\nnumfactors->calloc");
+
+		free(*factors);
+
+		return 0;
+	}
+
+	facp = *factors;
+
+	powp = *powers;
+
+	while(number != 1 && *primes1 != 0)
+	{
+		if(number % *primes1 == 0)						/* If find a factor */
+		{
+			*facp = *primes1;							/* Copy the prime */
+
+			while(number % *primes1 == 0)
+			{
+				number /= *primes1;
+
+				(*powp)++;								/* Increase power */
+			}
+
+			facp++;										/* Next factor */
+
+			powp++;										/* Next power */
+		}
+
+		primes1++;										/* Next prime number */
+	}
+
+	if(primes2 != NULL)
+	{
+		while(number != 1 && *primes2 != 0)
+		{
+			if(number % *primes2 == 0)
+			{
+				*facp = *primes2;
+
+				while(number % *primes2 == 0)
+				{
+					number /= *primes2;
+
+					(*powp)++;
+				}
+
+				facp++;
+
+				powp++;
+			}
+
+			primes2++;
+		}
+	}
+
+	if(number != 1)
+	{												/* To test if it is prime */
+		checknum = (unsigned long)ceil( sqrt(number) );
+
+		if(checknum <= maxprime)					/* The number is prime */
+		{
+			*facp = number;
+
+			(*powp)++;
+		}
+		else										/* Unknown */
+		{
+			printf("\nnumfactors->format error: missing prime numbers up to "
+											   "the value %lu\n", checknum   );
+
+			free(*factors);
+
+			free(*powers);
+
+			return -1;
+		}
+	}
+
+	return 1;
+}
+
+
 int overwritefile(char *filename, unsigned long quantity, unsigned long last,
-									unsigned long *list1, unsigned long *list2)
+								   unsigned long *list1, unsigned long *list2)
 {
 	FILE *file;
 
@@ -390,4 +548,65 @@ void updateparam(unsigned long *list,
 
 	if(*list != 0)					/* If the list is not empty */
 		*last = *--lptr;			/* save the last value      */
+}
+
+
+int writefctrfile(unsigned long number,
+				  unsigned long *factors, unsigned long *powers)
+{
+	char *filename;
+	FILE *file;
+
+	filename = getfilename(FILENAME, number, EXTENSION);
+
+	if(!filename)
+	{
+		printf("\nwritefctrfile->getfilename: error naming factor file\n");
+
+		return 0;
+	}
+
+	file = fopen(filename, "w");
+
+	if(!file)
+	{
+		perror("\nwritefctrfile->fopen");
+
+		free(filename);
+
+		return 0;
+	}
+
+	free(filename);
+
+	fprintf(file, "Prime factors of %lu:\n\n", number);
+
+	while(*factors != 0)									/* Write factors */
+	{
+		fprintf(file, "%lu%s", *factors, (*(factors + 1) != 0) ? ", " : "\n");
+
+		factors++;
+	}
+
+	fprintf(file, "\nRespective powers of the factors:\n\n");
+
+	while(*powers != 0)										/* Write powers */
+	{
+		fprintf(file, "%lu%s", *powers, (*(powers + 1) != 0) ? ", " : "");
+
+		powers++;
+	}
+
+	if( ferror(file) )							/* If an error occurred in */
+	{											/* the process             */
+		perror("\nwritefctrfile->fprintf");
+
+		fclose(file);
+
+		return 0;
+	}
+
+	fclose(file);
+
+	return 1;
 }

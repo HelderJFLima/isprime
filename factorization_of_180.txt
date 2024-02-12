@@ -1,0 +1,7 @@
+Prime factors of 180:
+
+2, 3, 5
+
+Respective powers of the factors:
+
+2, 2, 1

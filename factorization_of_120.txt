@@ -1,0 +1,7 @@
+Prime factors of 120:
+
+2, 3, 5
+
+Respective powers of the factors:
+
+3, 1, 1

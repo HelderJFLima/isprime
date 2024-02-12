@@ -4,7 +4,8 @@
 *
 * This program answers whether a number is prime or not. It is possible to enter
 * the number via the command line or just call the program and wait for it to
-* request it.
+* request it. If the number is composite, it is possible to factor it into prime
+* numbers.
 *
 * For more information, look for the README file.
 *
@@ -12,6 +13,7 @@
 
 
 #include <ctype.h>
+#include <direct.h>				/* _getcwd */
 #include <errno.h>
 #include <limits.h>
 #include <math.h>
@@ -20,22 +22,27 @@
 #include "isprimefunctions.h"
 
 #define FILENAME "list_of_primes.txt"
-#define MINVALUE 7					/* Minimum value acceptable for testing */
+#define GETDIR   _getcwd				/* Function to get the directory name */
+#define MINVALUE 7						/* Minimum value acceptable for testing */
 
 
 /* Determine whether a number is prime or not. */
 
 int main(int argc, char *argv[])
 {
-	unsigned long testNum;		/* Number to test if it is prime */
-	unsigned long limit;		/* Limit for testing a number */
-	unsigned long quantity;		/* Quantity of prime numbers in memory */
-	unsigned long last;			/* Last prime number in the list */
-	unsigned long *listp;		/* List of primes */
-	unsigned long *listad;		/* List of additional primes */
-	int answer;					/* To be used by functions (yes or no) */
-	int option = '0';			/* To be used by the user (yes or no) */
-	FILE *file;					/* File with prime numbers */
+	unsigned long testNum;			/* Number to test if it is prime */
+	unsigned long limit;			/* Limit for testing a number */
+	unsigned long quantity;			/* Quantity of prime numbers in memory */
+	unsigned long last;				/* Last prime number in the list */
+	unsigned long *lfactors = NULL;	/* List of factors */
+	unsigned long *lpowers = NULL;	/* List of powers */
+	unsigned long *listp = NULL;	/* List of primes */
+	unsigned long *listad = NULL;	/* List of additional primes */
+	int check;						/* To check a return value */
+	int option = '0';				/* To be used by the user (yes or no) */
+	int prime;						/* To be used by functions (yes or no) */
+	char *dname;					/* Directory name */
+	FILE *file;						/* File with prime numbers */
 
 	if(argc == 1)
 	{
@@ -106,10 +113,8 @@ int main(int argc, char *argv[])
 
 		fclose(file);
 
-		answer = isprime(testNum, listp);				/* Determine if the */
+		prime = isprime(testNum, listp);				/* Determine if the */
 														/* number is prime  */
-
-		free(listp);
 	}
 	else
 	{
@@ -117,7 +122,7 @@ int main(int argc, char *argv[])
 			     "prime numbers to determine the result.\n"
 			   "\nDo you want this program to calculate the missing "
 			     "prime numbers to reach the conclusion if necessary?\n"
-			   "\nMay need to evaluate %lu numbers.\n", limit - last);
+			   "\nMay need to evaluate %lu numbers.\n", limit - last    );
 
 		do
 		{
@@ -142,13 +147,9 @@ int main(int argc, char *argv[])
 
 			fclose(file);
 
-			answer = isprime(testNum, listp);
+			prime = isprime(testNum, listp);
 
-			if(!answer)									/* It is not a prime */
-														/* number            */
-				free(listp);
-
-			else										/* Unresolved */
+			if(prime)									/* Unresolved */
 			{
 				listad = adlalloc(last, limit);			/* Allocate list for */
 														/* extra primes      */
@@ -163,7 +164,7 @@ int main(int argc, char *argv[])
 				}
 
 									/* Test if it is prime and update new list */
-				answer = isprimextnd(testNum, last + 1, listp, limit, listad);
+				prime = isprimextnd(testNum, last + 1, listp, limit, listad);
 
 												/* Update quantity and last */
 				updateparam(listad, &quantity, &last);
@@ -179,24 +180,102 @@ int main(int argc, char *argv[])
 
 					return 9;
 				}
-
-				free(listp);
-
-				free(listad);
 			}
 		}
 		else											/* If NO */
 		{
 			fclose(file);
 
-			printf("\nProgram execution terminated by user\n\n");
+			printf("\n\nProgram execution terminated by user\n\n");
 
 			return 0;
 		}
 	}
 														/* Output */
-	printf("\nNumber %lu %s\n\n", testNum,
-								  (answer) ? "is prime" : "is not prime");
+	printf("\n\nNumber %lu %s\n\n", testNum,
+								    (prime) ? "is prime" : "is not prime");
+
+	option = 'n';
+
+	if(!prime)									/* If the number is composite */
+	{
+		printf("\nDo you want to factor %lu "
+				 "into powers of prime numbers?\n\n", testNum);
+
+		do
+		{
+			if( !isspace(option) )
+				printf("\nAnswer (y/n): ");
+
+			option = tolower( getchar() );
+		}
+		while(option != 'y' && option != 'n');
+
+		if(option == 'n')								/* If NO */
+			printf("\n\nProgram execution terminated by user\n\n");
+	}
+
+	if(option == 'y')									/* If YES */
+	{													/* Factor the number */
+		check = numfactors(testNum, last, listp, listad, &lfactors, &lpowers);
+
+		if(!check)
+		{
+			printf("\nmain->numfactors: error when factoring number\n\n");
+
+			free(listp);
+
+			free(listad);
+
+			return 10;
+		}
+		else if(check < 0)
+		{
+			printf("\nmain->numfactors: error when factoring number\n"
+				   "\n\nThe list of prime numbers must reach a value "
+					   "greater than or equal to\nthat stated above so that "
+					   "it is possible to factor the number %lu\n\n", testNum);
+
+			free(listp);
+
+			free(listad);
+
+			return 11;
+		}
+													/* Write the factor file */
+		if( !writefctrfile(testNum, lfactors, lpowers) )
+		{
+			printf("\nmain->writefctrfile: error when writing "
+										  "prime factors file\n\n");
+
+			free(lfactors);
+
+			free(lpowers);
+
+			free(listp);
+
+			free(listad);
+
+			return 12;
+		}
+
+		dname = GETDIR(NULL, _MAX_DIR);					/* Get the name of the */
+														/* current directory   */
+
+		if(dname != NULL)								/* Directory location */
+			printf("\n\nThe file with the prime factors was "
+					   "saved in the directory:\n\n\n%s\n\n", dname);
+
+		free(dname);
+	}
+
+	free(lfactors);
+
+	free(lpowers);
+
+	free(listp);
+
+	free(listad);
 
 	return 0;
 }

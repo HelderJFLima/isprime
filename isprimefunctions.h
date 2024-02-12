@@ -10,6 +10,12 @@
 unsigned long* adlalloc(unsigned long minimum, unsigned long maximum);
 
 
+/* Get a file name made of a string, a number and an extension; return a
+** pointer to the string with the file name or NULL if an error ocurrs.
+*/
+char* getfilename(char *firstpart, unsigned long number, char *extension);
+
+
 /* Get a command-line argument and convert it to an unsigned long; return 0 if
 ** an error occurs or the number is out of range.
 */
@@ -53,6 +59,17 @@ int isprimextnd(unsigned long number,
 unsigned long* loadlist(FILE *file, unsigned long quantity);
 
 
+/* Find the prime factor decomposition of a number from lists of prime numbers
+** and save the result in two arrays, one with the factors and the other with
+** the respective powers; return -1 if there are not enough prime numbers to do
+** the factorization, 0 if there is some other type of problem and 1 if
+** everything goes well.
+*/
+int numfactors(unsigned long number, unsigned long maxprime,
+			   unsigned long *primes1, unsigned long *primes2,
+			   unsigned long **factors, unsigned long **powers);
+
+
 /* Rewrite the prime number file with the updated values; returns 0 if an error
 ** occurs and 1 otherwise.
 */
@@ -65,3 +82,10 @@ int overwritefile(char *filename, unsigned long quantity, unsigned long last,
 */
 void updateparam(unsigned long *list,
 				 unsigned long *quantity, unsigned long *last);
+
+
+/* Write a file with the factorization of a given number; returns 0 if an error
+** occurs and 1 otherwise.
+*/
+int writefctrfile(unsigned long number,
+				  unsigned long *factors, unsigned long *powers);
